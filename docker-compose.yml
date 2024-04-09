@@ -1,0 +1,44 @@
+services:
+  db:
+    image: ${REGISTRY:-scpper}/db:${PLATFORM:-linux}-${TAG:-latest}
+    container_name: db
+    ports:
+      - 5555:3306
+    build:
+      context: scpper-db
+      dockerfile: Dockerfile
+    environment: 
+      - MYSQL_DATABASE=$DB_NAME
+      - MYSQL_USER=$DB_USER
+      - MYSQL_PASSWORD=$DB_PASSWORD
+  crawler:
+    image: ${REGISTRY:-scpper}/crawler:${PLATFORM:-linux}-${TAG:-latest}
+    container_name: crawler
+    build: 
+      context: scpper-crawler
+      dockerfile: Dockerfile
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_NAME=$DB_NAME
+      - DB_USER=$DB_USER
+      - DB_PASSWORD=$DB_PASSWORD
+      - CRAWLER_BRANCH=$BRANCH_TO_CRAWL
+    depends_on:
+      - db
+  web:
+    image: ${REGISTRY:-scpper}/web:${PLATFORM:-linux}-${TAG:-latest}
+    container_name: web
+    ports:
+      - 5556:80
+    build:
+      context: scpper-web
+      dockerfile: Dockerfile
+    environment:
+       - DB_HOST=db
+       - DB_NAME=$DB_NAME
+       - DB_USER=$DB_USER
+       - DB_PASSWORD=$DB_PASSWORD
+       - APPLICATION_ENV=development
+    depends_on:
+      - db
